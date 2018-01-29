@@ -4,6 +4,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"context"
+	"syscall"
+	"os/signal"
 
 	"go-learn-rest-api/handlers"
 )
@@ -19,9 +22,29 @@ func main() {
 	if port == "" {
 		log.Fatal("Port is not set.")
 	}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	router := handlers.Router()
+	srv := &http.Server {
+		Addr: ":" + port,
+		Handler: router,
+	}
+	go func() {
+		log.Fatal(srv.ListenAndServe())
+	}()
 
 	log.Print("The service is ready to listen and serve PORT: " + port)
-	log.Fatal(http.ListenAndServe(":" + port, router))
+
+	killSignal := <-stop
+		switch killSignal {
+		case os.Interrupt:
+			log.Print("Got SIGINT...")
+		case syscall.SIGTERM:
+			log.Print("Got SIGTERM...")
+		}
+
+		log.Print("The service is shutting down...")
+		srv.Shutdown(context.Background())
+		log.Print("Server gracefully stopped")
 }
