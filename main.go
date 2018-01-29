@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"log"
 
-	"rest-api/handlers"
+	"go-learn-rest-api/handlers"
 )
 
 func main() {
